@@ -20,6 +20,7 @@ nonisolated enum ConstraintType: Hashable, Sendable {
     case notEqual
     case greaterThan(Int)
     case lessThan(Int)
+    case any
     case none
 
     var displayText: String {
@@ -29,13 +30,16 @@ nonisolated enum ConstraintType: Hashable, Sendable {
         case .notEqual: return "\u{2260}"
         case .greaterThan(let n): return ">\(n)"
         case .lessThan(let n): return "<\(n)"
+        case .any: return "\u{2731}"
         case .none: return ""
         }
     }
 
     var hasConstraint: Bool {
-        if case .none = self { return false }
-        return true
+        switch self {
+        case .none: return false
+        default: return true
+        }
     }
 }
 

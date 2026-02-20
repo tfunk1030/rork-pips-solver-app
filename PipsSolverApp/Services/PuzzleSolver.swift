@@ -131,7 +131,7 @@ nonisolated final class PuzzleSolver: Sendable {
         if values.isEmpty { return true }
 
         switch region.constraint {
-        case .none:
+        case .none, .any:
             return true
 
         case .equal:

@@ -152,6 +152,8 @@ nonisolated final class VisionExtractionService: Sendable {
                 constraint = .greaterThan(regionData.constraintValue ?? 0)
             case "lessthan", "less_than", "lessThan":
                 constraint = .lessThan(regionData.constraintValue ?? 0)
+            case "any":
+                constraint = .any
             default:
                 constraint = .none
             }
@@ -199,6 +201,7 @@ nonisolated final class VisionExtractionService: Sendable {
         - "≠" = all pips in region must be different → constraintType: "notEqual"
         - ">N" = sum of pips must be greater than N → constraintType: "greaterThan"
         - "<N" = sum of pips must be less than N → constraintType: "lessThan"
+        - "*" or any/star symbol = any value allowed (no restriction but explicitly marked) → constraintType: "any"
         - No symbol = no restriction → constraintType: "none"
 
         Return JSON in this EXACT format:
@@ -214,7 +217,7 @@ nonisolated final class VisionExtractionService: Sendable {
         - Only include active/playable cells in "cells". Skip blocked cells.
         - Row/col indices start at 0.
         - Each cell belongs to exactly one region.
-        - constraintValue is null for "equal", "notEqual", and "none".
+        - constraintValue is null for "equal", "notEqual", "any", and "none".
         - List ALL dominoes from the tray.
         - Return ONLY the JSON, no markdown fences, no explanation.
         """
