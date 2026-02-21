@@ -190,19 +190,25 @@ nonisolated final class VisionExtractionService: Sendable {
         """
         Analyze this screenshot of a NYT Pips domino puzzle game. Extract the puzzle data and return ONLY valid JSON.
 
-        The puzzle has:
-        1. A grid of cells in rows/columns. Some cells may be blocked/inactive.
-        2. Colored regions - groups of cells sharing the same color, each with a constraint.
-        3. Dominoes in a tray at the bottom - each has two halves with 0-6 pip dots.
+        VISUAL FORMAT OF THE PUZZLE:
+        - The grid is shown as a collection of rounded square cells arranged in rows and columns.
+        - Cells belonging to the same region share the same background color (e.g. purple, pink, teal, orange, olive, gray, etc.) and are grouped by dashed colored borders.
+        - BLOCKED/INACTIVE cells appear as solid BLACK rectangles. These are NOT part of any region. Do NOT include them.
+        - Constraint badges appear as small colored DIAMOND shapes (rotated squares) positioned at the edge or corner of a region. Inside each diamond is the constraint value:
+          • A number like "0", "7", "12" → sum constraint (all pips in region must sum to that number)
+          • "=" symbol → equal constraint (all pips in region must be the same value)
+          • "≠" symbol → notEqual constraint (all pips must be different)
+          • ">N" → greaterThan constraint
+          • "<N" → lessThan constraint
+          • No diamond badge on the region → "any" constraint (no restriction)
+        - The domino tray at the bottom shows dominoes as white rectangular tiles, each split into two halves with pip dots (0-6 dots per half).
 
-        Constraint types:
-        - A number (e.g. "7") = sum of all pips in region must equal that number → constraintType: "sum"
-        - "=" = all pips in region must be same value → constraintType: "equal"
-        - "≠" = all pips in region must be different → constraintType: "notEqual"
-        - ">N" = sum of pips must be greater than N → constraintType: "greaterThan"
-        - "<N" = sum of pips must be less than N → constraintType: "lessThan"
-        - "*" or any/star symbol = any value allowed (no restriction but explicitly marked) → constraintType: "any"
-        - No symbol = no restriction → constraintType: "none"
+        GRID ANALYSIS:
+        1. First determine the bounding grid dimensions (rows × cols) by looking at the full extent of the grid including blocked cells.
+        2. Identify which cells are active (colored) vs blocked (black). Only include active cells.
+        3. Group active cells by their background color to determine regions.
+        4. Find the constraint diamond badge for each region and read its value.
+        5. Count all dominoes in the tray carefully - count the pip dots on each half.
 
         Return JSON in this EXACT format:
         {
@@ -214,11 +220,14 @@ nonisolated final class VisionExtractionService: Sendable {
         }
 
         Rules:
-        - Only include active/playable cells in "cells". Skip blocked cells.
-        - Row/col indices start at 0.
-        - Each cell belongs to exactly one region.
-        - constraintValue is null for "equal", "notEqual", "any", and "none".
-        - List ALL dominoes from the tray.
+        - Only include active/playable cells (colored cells). Skip all black/blocked cells.
+        - Row/col indices start at 0, counting from top-left of the bounding grid.
+        - Each active cell belongs to exactly one region (determined by its background color).
+        - constraintType must be one of: "sum", "equal", "notEqual", "greaterThan", "lessThan", "any".
+        - constraintValue is the number for "sum"/"greaterThan"/"lessThan", null for others.
+        - If a region has NO diamond badge, use constraintType: "any" with constraintValue: null.
+        - List ALL dominoes from the tray. Count pip dots carefully: 0=blank, 1=one dot center, 2=diagonal dots, 3=diagonal three, 4=four corners, 5=four corners+center, 6=six dots.
+        - For each domino, pip1 is the LEFT half, pip2 is the RIGHT half.
         - Return ONLY the JSON, no markdown fences, no explanation.
         """
     }
